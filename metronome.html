@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Metronome</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #111;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+.container {
+    text-align: center;
+}
+
+.bpm-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+button {
+    font-size: 30px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #222;
+    color: white;
+    cursor: pointer;
+}
+
+button:active {
+    transform: scale(0.95);
+}
+
+#bpm {
+    font-size: 40px;
+    width: 120px;
+}
+
+.play {
+    font-size: 25px;
+    padding: 15px 40px;
+    background: #1e88e5;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="bpm-row">
+        <button id="down">←</button>
+        <div id="bpm">50</div>
+        <button id="up">→</button>
+    </div>
+
+    <button class="play" id="play">Play</button>
+
+</div>
+
+<script>
+let bpm = 50;
+let isPlaying = false;
+let intervalId;
+
+// --- Web Audio API click sound ---
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playClick() {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.value = 1000; // "click" tone
+
+    gain.gain.value = 0.1;
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.05);
+}
+
+// --- Update BPM display ---
+function updateDisplay() {
+    document.getElementById("bpm").innerText = bpm;
+}
+
+// --- Start metronome ---
+function start() {
+    const interval = 60000 / bpm;
+
+    intervalId = setInterval(() => {
+        playClick();
+    }, interval);
+}
+
+// --- Stop metronome ---
+function stop() {
+    clearInterval(intervalId);
+}
+
+// --- Buttons ---
+document.getElementById("up").onclick = () => {
+    bpm += 5;
+    updateDisplay();
+
+    if (isPlaying) {
+        stop();
+        start();
+    }
+};
+
+document.getElementById("down").onclick = () => {
+    if (bpm > 20) bpm -= 5;
+    updateDisplay();
+
+    if (isPlaying) {
+        stop();
+        start();
+    }
+};
+
+document.getElementById("play").onclick = () => {
+    if (!isPlaying) {
+        audioCtx.resume(); // important for Safari
+        start();
+        document.getElementById("play").innerText = "Stop";
+    } else {
+        stop();
+        document.getElementById("play").innerText = "Play";
+    }
+    isPlaying = !isPlaying;
+};
+</script>
+
+</body>
+</html>
